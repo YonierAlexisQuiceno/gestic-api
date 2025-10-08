@@ -127,11 +127,6 @@ __azurite_db*__.json
 appsettings.Development.json
 appsettings.Local.json
 
-# Secrets
-**/appsettings.*.json
-!**/appsettings.json
-secrets.json
-
 # Mac
 .DS_Store
 ._*
