@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Configurar la serialización JSON para ignorar ciclos en las referencias.
 // Esto evita excepciones del tipo "A possible object cycle was detected"
 // al serializar entidades con relaciones bidireccionales, como Service
-// -> Category -> Services【76584833554123†L93-L101】. Se utiliza la clase
+// -> Category -> Services. Se utiliza la clase
 // ReferenceHandler.IgnoreCycles disponible en System.Text.Json.
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
 {
@@ -19,15 +19,44 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
 builder.Services.AddDbContext<GesticDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ⭐ CONFIGURAR CORS - Permitir todos los orígenes
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Agregar servicios de Swagger para documentar y probar la API.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Habilitar la UI de Swagger en desarrollo.
+// ⭐ USAR CORS (debe ir antes de los endpoints)
+app.UseCors("AllowAll");
+
+// Habilitar la UI de Swagger.
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// ⭐ ENDPOINTS RAÍZ Y HEALTH CHECK
+app.MapGet("/", () => Results.Ok(new 
+{ 
+    message = "Gestic API",
+    status = "running",
+    version = "1.0.0",
+    timestamp = DateTime.UtcNow
+}));
+
+app.MapGet("/health", () => Results.Ok(new 
+{ 
+    status = "healthy",
+    timestamp = DateTime.UtcNow
+}));
 
 // ------------------- ENDPOINTS PARA CATEGORÍAS -------------------
 app.MapGet("/api/categories", async (GesticDbContext db) =>
