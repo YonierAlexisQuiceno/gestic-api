@@ -19,17 +19,17 @@ jobs:
         dotnet-version: '8.0.x'
     
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./GesticApi.csproj
     
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build ./GesticApi.csproj --configuration Release --no-restore
     
     - name: Test
-      run: dotnet test --no-build --verbosity normal --configuration Release
+      run: dotnet test ./GesticApi.csproj --no-build --verbosity normal --configuration Release
       continue-on-error: true
     
     - name: Publish
-      run: dotnet publish -c Release -o ./publish
+      run: dotnet publish ./GesticApi.csproj -c Release -o ./publish
     
     - name: Copy .ebextensions to publish folder
       run: |
