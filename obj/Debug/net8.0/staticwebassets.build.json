@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "f4G0nTMCpjhcIUM9fkH08GFMSoEbxW6T+h4xYOpVxaE=",
+  "Source": "GesticApi",
+  "BasePath": "_content/GesticApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
