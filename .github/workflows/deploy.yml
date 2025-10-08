@@ -1,0 +1,67 @@
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --configuration Release
+      continue-on-error: true
+    
+    - name: Publish
+      run: dotnet publish -c Release -o ./publish
+    
+    - name: Copy .ebextensions to publish folder
+      run: |
+        if [ -d .ebextensions ]; then
+          cp -r .ebextensions ./publish/
+        fi
+    
+    - name: Generate deployment package
+      run: |
+        cd publish
+        zip -r ../deploy-${{ github.sha }}.zip .
+        cd ..
+    
+    - name: Get timestamp
+      id: time
+      run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+    
+    - name: Deploy to Elastic Beanstalk
+      uses: einaregilsson/beanstalk-deploy@v22
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: ${{ secrets.EB_APPLICATION_NAME }}
+        environment_name: ${{ secrets.EB_ENVIRONMENT_NAME }}
+        region: ${{ secrets.AWS_REGION }}
+        version_label: "v-${{ steps.time.outputs.timestamp }}-${{ github.sha }}"
+        deployment_package: deploy-${{ github.sha }}.zip
+        wait_for_deployment: true
+        wait_for_environment_recovery: 300
+    
+    - name: Deployment success
+      if: success()
+      run: |
+        echo "🚀 Deployment successful!"
+        echo "Check your application at Elastic Beanstalk console"
